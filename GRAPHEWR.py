@@ -69,7 +69,7 @@ def q_graph(players: dict[str, pd.DatetimeIndex]) -> None:
     plt.figure()
 
     for label, series in players.items():
-        plt.plot(series, series_array(len(series)), label=label)
+        plt.plot(series, series_array(len(series)), label=label, drawstyle='steps-post')
 
     plt.xlabel("Time")
     plt.ylabel("Amount of Checks")
@@ -88,7 +88,7 @@ def p_graph(players: dict[str, pd.DatetimeIndex]) -> None:
     plt.figure()
 
     for label, series in players.items():
-        plt.plot(series, percent_array(len(series)), label=label)
+        plt.plot(series, percent_array(len(series)), label=label, drawstyle='steps-post')
 
     plt.xlabel("Time")
     plt.ylabel("Percent Complete")
