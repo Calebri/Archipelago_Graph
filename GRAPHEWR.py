@@ -2,9 +2,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def read_file(filename: str) -> list[str]:
+def read_file(filename: str) -> list[list[str]]:
     """
-    Reads the given file and puts all lines that are associated with an individual getting a check in a list.
+    Reads the given file and puts all lines that are associated with an individual getting a check in a list, split by
+    spaces.
     :param filename: name of the file to read
     :return: list of lines associated with an individual getting a check in a list
     """
@@ -12,21 +13,21 @@ def read_file(filename: str) -> list[str]:
         lines = list()
         for line in f.readlines():
             # e.g. [time] (Team #1) player sent...
-            if line.split(" ")[2] == "(Team":
+            line = line.split(" ")
+            if len(line) >= 3 and line[2] == "(Team":
                 lines.append(line)
     return lines
 
-def format_check_timeline(log: list[str], debug: bool = False) -> dict[str, list[str]]:
+def format_check_timeline(log: list[list[str]], debug: bool = False) -> dict[str, list[str]]:
     """
-    Takes a list of lines from the log where someone is getting a check and formats them into a dictionary where the
-    key is the player name and the value is a list of times when the player got a check.
+    Takes a list of lines (already split) from the log where someone is getting a check and formats them into a
+    dictionary where the key is the player name and the value is a list of times when the player got a check.
     :param log: list of lines associated with an individual getting a check in a list
     :param debug: pass true to print debug messages
     :return: dictionary where keys are player names and values are the times when the player got a check
     """
     players = dict()
     for check in log:
-        check = check.split(" ")
         time = check[0][1:] + " " + check[1][:-6]
         player = check[4]
         if not (player in players):
