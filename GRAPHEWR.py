@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
-
+import tkinter as tk
+from tkinter import filedialog
 
 def read_file(filename: str) -> list[list[str]]:
     """
@@ -97,6 +98,30 @@ def p_graph(players: dict[str, pd.DatetimeIndex]) -> None:
 
     plt.show()
 
+def select_file() -> str:
+    """
+    Opens a file dialog with Tkinter and returns the full path as a string.
+    :return: The full path of the selected file as a string
+    """
+    root = tk.Tk()
+    root.withdraw()
+
+    path = filedialog.askopenfilename(
+        title="Select a log file",
+        initialdir=".",
+        filetypes=(
+            ("Text files", "*.txt"),
+            ("All files", "*")
+        )
+    )
+
+    root.destroy
+
+    if path:
+        return path
+    else:
+        return ""
+
 def main():
     debug = False
     players = None
@@ -112,9 +137,8 @@ def main():
                 debug = True
                 print("Debug is now true")
         elif choice == "f":
-            filename = input("Filename? ")
             try:
-                checks = read_file("logs/" + filename)
+                checks = read_file(select_file())
                 players = format_check_timeline(checks, debug)
 
                 for player in players:
