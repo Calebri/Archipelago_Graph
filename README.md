@@ -19,3 +19,4 @@ Open the application and select log files from an Archipelago game. Subsequent c
 ## Current Limiations
 
 - Percentage graph is based on the current number of checks collected instead of the actual amount in the player's game
+- Cannot filter or modify in any way graph categories
