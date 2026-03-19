@@ -136,7 +136,7 @@ def graph(logs: list[Log], y_label: str, y_constructor, debug: bool = False) -> 
                 print("Invalid selection")
         selection = set(selection)
 
-    #if there is more than one selection, populate the players_relative entries for each log
+    # If there is more than one selection, populate the players_relative entries for each log
     if len(selection) > 1:
         for i in selection:
             oldest = None
