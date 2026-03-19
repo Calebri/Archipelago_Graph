@@ -120,7 +120,7 @@ def graph(logs: list[Log], y_label: str, y_constructor, debug: bool = False) -> 
             invalid = False
             selection = input()
             if selection == "c":
-                print(HELP_STRING)
+                show_help()
                 return
             selection = selection.split(" ")
             try:
@@ -166,8 +166,7 @@ def graph(logs: list[Log], y_label: str, y_constructor, debug: bool = False) -> 
     plt.xticks(rotation=45)
 
     plt.show()
-    console_clear()
-    print(HELP_STRING)
+    show_help()
 
 def select_file() -> str:
     """
@@ -254,23 +253,30 @@ def file_menu(logs: list[Log], full: bool, debug: bool = False):
             except Exception as e:
                 print("Unexpected Error: ", e)
         elif choiceF == "q":
-            console_clear()
-            print(HELP_STRING)
+            show_help()
             break
         else:
             print("Invalid input")
 
 def console_clear() -> None:
     """
-    Clears the console window
+    Clears the console window.
     :return: None
     """
     os.system('cls' if os.name == 'nt' else 'clear')
 
+def show_help() -> None:
+    """
+    Clears the console window and show the help string.
+    :return: None
+    """
+    console_clear()
+    print(HELP_STRING)
+
 def main():
     debug = False
     logs = []
-    print(HELP_STRING)
+    show_help()
     while True:
         choice = input()
         if choice == "debug": # Toggle debug
@@ -289,12 +295,11 @@ def main():
             graph(logs, "Percentage of Presently Completed Checks", lambda x: array(len(x),
                                                                                     lambda y: (y/len(x) * 100)), debug)
         elif choice == "h": # Print help message
-            print(HELP_STRING)
+            show_help()
         elif choice == "q": # Quit
             break
         else:
             print("Invalid input")
 
 if __name__ == '__main__':
-    console_clear()
     main()
