@@ -109,29 +109,32 @@ def graph(logs: list[Log], y_label: str, y_constructor, debug: bool = False) -> 
         print("Set a file to read from first")
         return
 
-    console_clear()
-    print("Select files to graph (e.g. '0 1 3') (c to cancel):")
-    for i in range(len(logs)):
-        print(i, "|", logs[i].filename)
-    while True:
-        invalid = False
-        selection = input()
-        if selection == "c":
-            print(HELP_STRING)
-            return
-        selection = selection.split(" ")
-        try:
-            for i in range(len(selection)):
-                selection[i] = int(selection[i])
-            for i in selection:
-                if i < 0 or i >= len(logs):
-                    print("Invalid selection")
-                    invalid = True
-            if not invalid:
-                break
-        except ValueError:
-            print("Invalid selection")
-    selection = set(selection)
+    if len(logs) == 1: # Skip selection if only one log is loaded
+        selection = {0}
+    else:
+        console_clear()
+        print("Select files to graph (e.g. '0 1 3') (c to cancel):")
+        for i in range(len(logs)):
+            print(i, "|", logs[i].filename)
+        while True:
+            invalid = False
+            selection = input()
+            if selection == "c":
+                print(HELP_STRING)
+                return
+            selection = selection.split(" ")
+            try:
+                for i in range(len(selection)):
+                    selection[i] = int(selection[i])
+                for i in selection:
+                    if i < 0 or i >= len(logs):
+                        print("Invalid selection")
+                        invalid = True
+                if not invalid:
+                    break
+            except ValueError:
+                print("Invalid selection")
+        selection = set(selection)
 
     #if there is more than one selection, populate the players_relative entries for each log
     if len(selection) > 1:
