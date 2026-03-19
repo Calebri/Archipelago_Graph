@@ -11,12 +11,25 @@ HELP_STRING = ("-- 'f' to set a file to read from\n"
                "-- '2' for percentage graph\n"
                "-- 'h' to print this message again\n"
                "-- 'q' to exit")
+FILE_MENU_STRING = ("Files selected:\n"
+                    "remove [i] | remove the file from consideration\n"
+                    "add        | add a new file\n"
+                    "q          | close this menu\n")
 ############################################################
 
-#TODO Add documentation
 class Log:
-    def __init__(self, players, filepath, filename):
+    """
+    Class to represent a log file
+    """
+    def __init__(self, players: dict[str, pd.Series], filepath: str, filename: str):
+        """
+        Constructor for the Log class
+        :param players: dictionary of players with their times in which they completed a check
+        :param filepath: the filepath of the log
+        :param filename: the name of the file
+        """
         self.players = players
+        self.players_relative = dict() #possibly somehow add documentation regarding this
         self.filepath = filepath
         self.filename = filename
 
@@ -36,12 +49,12 @@ def read_file(filename: str) -> list[list[str]]:
                 lines.append(line)
     return lines
 
-def format_check_timeline(log: list[list[str]], debug: bool = False) -> dict[str, list[str]]:
+def format_check_timeline(log: list[list[str]], debug: bool = False) -> dict[str, pd.Series]:
     """
     Takes a list of lines (already split) from the log where someone is getting a check and formats them into a
     dictionary where the key is the player name and the value is a list of times when the player got a check.
     :param log: list of lines associated with an individual getting a check in a list
-    :param debug: pass true to print debug messages
+    :param debug: print debug messages (default False)
     :return: dictionary where keys are player names and values are the times when the player got a check
     """
     players = dict()
@@ -67,29 +80,76 @@ def array(size: int, f) -> list[int | float]:
         new_arr.append(f(i))
     return new_arr
 
-#TODO Update documentation
-def graph(logs: list[Log], y_label: str, y_constructor) -> None:
+def time_convert(arr: pd.Series, oldest: pd.Timestamp) -> list[float]:
+    """
+    Creates and returns a list of times that represent the delta between the given oldest time and each time in the
+    given list.
+    :param arr: the list containing times
+    :param oldest: the oldest time to pivot the rest off of
+    :return: a list of delta-times in minutes
+    """
+    new_arr = list()
+    for i in range(len(arr)):
+        new_arr.append((arr[i] - oldest).total_seconds()/60)
+    return new_arr
+
+def graph(logs: list[Log], y_label: str, y_constructor, debug: bool = False) -> None:
     """
     Create a line graph of some statistic against time, categorized by player (each key in the dictionary).
-    :param logs:
-    :param selection:
+    Player will be prompted with which logs to graph out of the given. If one is selected, time will be formatted
+    directly as it exists (when the player got the check), otherwise, time will be formatted relative to the oldest
+    time-stamp (minutes since the start).
+    :param logs: the list of logs to consider
     :param y_label: string to be shown on the y-axis
     :param y_constructor: function by which to plot the data on the y-axis using the DateTimeIndex as a parameter
+    :param debug: print debug messages (default False)
     :return: None
     """
     console_clear()
-    print("Select files to graph (e.g. '0 1 3'):")
+    print("Select files to graph (e.g. '0 1 3') (c to cancel):")
     for i in range(len(logs)):
         print(i, "|", logs[i].filename)
-    selection = input()
-    selection = selection.split(" ")
+    while True:
+        invalid = False
+        selection = input()
+        if selection == "c":
+            print(HELP_STRING)
+            return
+        selection = selection.split(" ")
+        try:
+            for i in range(len(selection)):
+                selection[i] = int(selection[i])
+            for i in selection:
+                if i < 0 or i >= len(logs):
+                    print("Invalid selection")
+                    invalid = True
+            if not invalid:
+                break
+        except ValueError:
+            print("Invalid selection")
+    selection = set(selection)
+
+    #if there is more than one selection, populate the players_relative entries for each log
+    if len(selection) > 1:
+        for i in selection:
+            oldest = None
+            players = logs[i].players
+            for player in players:
+                for time in players[player]:
+                    if oldest is None or time < oldest:
+                        oldest = time
+            if debug:
+                print("oldest time for", logs[i].filename +  ":", oldest)
+            for player in players:
+                logs[i].players_relative[player] = time_convert(players[player], oldest)
 
     plt.figure()
 
-    #TODO If there are multiple logs, use relative time instead of fixed
     for i in selection:
-        log = logs[int(i)]
-        players = log.players
+        log = logs[i]
+        if debug:
+            print("graphing", log.filename)
+        players = log.players_relative if len(selection) > 1 else log.players
         for label, series in players.items():
             plt.plot(series, y_constructor(series), label=label + (" | " + log.filename if len(selection) > 1
                                                                    else ""), drawstyle='steps-post')
@@ -127,20 +187,35 @@ def select_file() -> str:
     else:
         return ""
 
-#TODO Add documentation
-def file_menu(logs, full, debug: bool = False):
-    while True:
-        console_clear()
-        print("Files selected:\n"
-              "remove [i] | remove the file from consideration\n"
-              "add        | add a new file\n"
-              "q          | close this menu\n")
+def file_menu(logs: list[Log], full: bool, debug: bool = False):
+    """
+    Instantiates an interface with which to select files (add or remove for consideration).
+    :param logs: the list of logs to add or remove Logs from
+    :param full: if the full file path should be listed instead of the file name
+    :param debug: print debug messages (default False)
+    :return: None
+    """
+
+    def file_menu_message() -> None:
+        """
+        Prints the text interface for this menu
+        :return: None
+        """
+        print(FILE_MENU_STRING)
         for i in range(len(logs)):
             print(i, "|", logs[i].filename, ("(" + logs[i].filepath + ")") if full else "")
+
+    file_menu_message()
+    while True:
         choiceF = input()
         if choiceF[:6] == "remove":
             try:
-                logs.pop(int(choiceF[7:]))
+                rm_log = logs.pop(int(choiceF[7:]))
+                if debug:
+                    print("Removed log:", rm_log.filename, "(", rm_log, ")")
+                    input("Press ENTER to continue")
+                console_clear()
+                file_menu_message()
             except ValueError:
                 print("Invalid selection - not a number")
             except IndexError:
@@ -150,7 +225,9 @@ def file_menu(logs, full, debug: bool = False):
         elif choiceF == "add":
             try:
                 file = select_file()
-                print(file)
+                if debug:
+                    print("Reading file:", file)
+                    input("Press ENTER to continue")
                 checks = read_file(file)
                 players = format_check_timeline(checks, debug)
 
@@ -158,8 +235,13 @@ def file_menu(logs, full, debug: bool = False):
                     players[player] = pd.to_datetime(players[player])
 
                 filename = file.split("/")[-1]
-                logs.append(Log(players, file, filename))
-                print("File set")
+                log = Log(players, file, filename)
+                if debug:
+                    print("Created Log:", log.filename, "(", log, ")")
+                    input("Press ENTER to continue")
+                logs.append(log)
+                console_clear()
+                file_menu_message()
             except FileNotFoundError:
                 print("File not found")
             except Exception as e:
@@ -178,7 +260,6 @@ def console_clear() -> None:
     """
     os.system('cls' if os.name == 'nt' else 'clear')
 
-#TODO Add more debug stuff
 def main():
     debug = False
     logs = []
@@ -193,18 +274,19 @@ def main():
                 debug = True
                 print("Debug is now true")
         elif choice[0] == "f": # Select file to read from
+            console_clear()
             file_menu(logs, choice[2:] == "full", debug)
         elif choice == "1": # Quantity graph
             if len(logs) == 0:
                 print("Set a file to read from first")
             else:
-                graph(logs, "Amount of Checks", lambda x: array(len(x), lambda y: y))
+                graph(logs, "Amount of Checks", lambda x: array(len(x), lambda y: y), debug)
         elif choice == "2": # Percentage graph
             if len(logs) == 0:
                 print("Set a file to read from first")
             else:
                 graph(logs, "Percentage of Presently Completed Checks", lambda x: array(len(x),
-                                                                                           lambda y: (y/len(x) * 100)))
+                                                                                    lambda y: (y/len(x) * 100)), debug)
         elif choice == "h": # Print help message
             print(HELP_STRING)
         elif choice == "q": # Quit
