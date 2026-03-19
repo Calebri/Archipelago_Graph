@@ -4,12 +4,12 @@ This is a utility script written in Python to graph completion rates of [Archipe
 
 ## Instructions
 
-Open the application and type `r` to select a log file from an Archipelago game. Subsequent commands will use data from this file.
+Open the application and select log files from an Archipelago game. Subsequent commands will use data from this file.
 
 ### Commands
 |Command|Function|
 |-|-|
-|`f`|Selects a log file to read data from|
+|`f`|Opens an interface to select log files to read data from (can add 'full' to increase verbosity of filenames)|
 |`1`|Creates a figure graphing the amount of checks each player collected over time|
 |`2`|Creates a figure graphing the percentage of checks each player collected relative to their current number of checks collected over time|
 |`h`|Prints the list of commands|
@@ -18,5 +18,4 @@ Open the application and type `r` to select a log file from an Archipelago game.
 
 ## Current Limiations
 
-- Unable to combine multiple log files into one figure
 - Percentage graph is based on the current number of checks collected instead of the actual amount in the player's game
